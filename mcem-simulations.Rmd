@@ -1,0 +1,20 @@
+---
+title: "Inference II Simulation"
+author: "Andy Shi"
+date: "May 8, 2018"
+output: pdf_document
+---
+
+# EM vs. Monte Carlo EM
+
+## Simulated Data: Univariate
+
+## Simulated Data: Multivariate
+
+## Real Data: Old Faithful
+
+# GLMM: MCEM vs. Gauss-Hermite
+
+## Random intercepts
+
+## Random intercepts and slopes
