@@ -12,7 +12,44 @@ library(mixtools)
 attach(faithful)
 wait1 <- normalmixEM(waiting, lambda = .5, mu = c(55, 80), sigma = c(5,5))
 plot(wait1, density = TRUE, cex.axis = 1.4, cex.lab = 1.5, cex.main = 1.5,
-     main2 = "Time between Old Faithful eruptions", xlab2 = "Minutes",whichplots = 2)
+     main2 = "Time between Old Faithful eruptions", xlab2 = "Minutes", whichplots = 2)
+
+# simulations
+set.seed(11)
+numSims = 100
+numObs = 1000
+x = NULL
+x = rnormmix(n=numObs*numSims,lambda = c(0.3,0.7),mu=c(5,10),sigma=c(2,3)) # generate the data
+matrix_results_normalEM = matrix(0,nrow = numSims,ncol = 7)
+for (i in 1:numSims){
+    # 1- 1000, 1001-2000, 2001-3000,...
+  normalEM = normalmixEM(x[(numObs*(i-1)+1):(numObs*(i))],maxit = 10000)
+  matrix_results_normalEM[i,1:2] = normalEM$lambda
+  matrix_results_normalEM[i,3:4] = normalEM$mu
+  matrix_results_normalEM[i,5:6] = normalEM$sigma
+  matrix_results_normalEM[i,7] = length(normalEM$all.loglik)
+}
+
+library(ggplot2)
+library(reshape)
+dataframe_results_normalEM = as.data.frame(matrix_results_normalEM)
+colnames(dataframe_results_normalEM) = c("lambda1","lambda2","mu1","mu2",
+                                         "sigma1","sigma2","numIters")
+dataframe_results_normalEM$simulations = seq(1,numSims)
+library(cowplot)
+melted_df = melt(dataframe_results_normalEM[,-7],id.vars = "simulations")
+melted_df$method = rep("normalEM",length(melted_df$simulations))
+p <- ggplot(melted_df) + geom_violin(aes(factor(variable), value,fill=factor(method))) +
+    ylab("Value") + xlab("") +
+    geom_segment(aes(x = 0.5, y = 0.3, xend = 1.5, yend = 0.3,col="red")) +
+    geom_segment(aes(x = 1.5, y = 0.7, xend = 2.5, yend = 0.7,col="red"))+
+    geom_segment(aes(x = 2.5, y = 5, xend = 3.5, yend = 5,col="red"))+
+    geom_segment(aes(x = 3.5, y = 10, xend = 4.5, yend = 10,col="red"))+
+    geom_segment(aes(x = 4.5, y = 2, xend = 5.5, yend = 2,col="red"))+
+    geom_segment(aes(x = 5.5, y = 3, xend = 6.5, yend = 3,col="red")) + 
+    guides(col=FALSE)
+p
+
 ```
 
 
