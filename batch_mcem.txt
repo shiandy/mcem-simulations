@@ -1,0 +1,14 @@
+#!/bin/bash
+#SBATCH -p short			# priority for proofing code
+#SBATCH -t 30				# minutes...or d-hh:mm:ss
+#SBATCH -c 1				# number of cores
+#SBATCH --mem 2000			# memory total in MB (for all cores)
+#SBATCH -e slurmout/%A_%a.err		# file to which STDERR will be written
+#SBATCH -o slurmout/%A_%a.out		# file to which STDOUT will be written
+#SBATCH --array=1-100			# job array
+
+mkdir ~/${SLURM_ARRAY_JOB_ID} # make one new directory for entire job array
+
+module load gcc/6.2.0 R/3.4.1 # load R
+
+Rscript run_mcem_array.R # run
