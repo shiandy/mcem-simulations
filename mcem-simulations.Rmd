@@ -145,9 +145,16 @@ summary(dataframe_results_normalEM$timing)
 summary(dataframe_results_mcem$timing)
 
 dataframe_results_normalEM$simulations = seq(1,numSims)
-melted_df = melt(dataframe_results_normalEM[,-7],id.vars = "simulations")
-melted_df$method = rep("normalEM",length(melted_df$simulations))
-p <- ggplot(melted_df) + geom_violin(aes(factor(variable), value,fill=factor(method))) +
+dataframe_results_mcem$simulations = seq(1,numSims)
+
+
+melted_df = melt(dataframe_results_normalEM[,-c(7,8)],id.vars = "simulations")
+melted_df_mcem = melt(dataframe_results_mcem[,-c(7,8)],id.vars = "simulations")
+
+melted_df_all = rbind(melted_df,melted_df_mcem)
+melted_df_all$method = c(rep("normalEM",length(melted_df$simulations)),
+                       rep("MCEM",length(melted_df_mcem$simulations)))
+p <- ggplot(melted_df_all) + geom_violin(aes(factor(variable), value,fill=factor(method))) +
     ylab("Value") + xlab("") +
     geom_segment(aes(x = 0.5, y = 0.3, xend = 1.5, yend = 0.3,col="red")) +
     geom_segment(aes(x = 1.5, y = 0.7, xend = 2.5, yend = 0.7,col="red"))+
