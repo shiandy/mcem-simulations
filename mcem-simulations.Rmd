@@ -29,7 +29,6 @@ for (i in 1:numSims){
   matrix_results_normalEM[i,5:6] = normalEM$sigma
   matrix_results_normalEM[i,7] = length(normalEM$all.loglik)
 }
-
 library(ggplot2)
 library(reshape)
 dataframe_results_normalEM = as.data.frame(matrix_results_normalEM)
@@ -60,6 +59,67 @@ p
 ## Real Data: Old Faithful
 
 # GLMM: MCEM vs. Gauss-Hermite
+
+```{r}
+load("sim_K10.RData")
+load("sim_K50.RData")
+
+# it is in gh_beta0, gh_beta1, mcem_beta0, and mcem_beta1
+
+library(mixtools)
+library(ggplot2)
+library(reshape)
+library(cowplot)
+library(gridExtra)
+dataframe_results_MCEM = as.data.frame(out_K10)
+dataframe_results_MCEM_K50 = as.data.frame(out_K50)
+
+dataframe_results_MCEM$simulations = seq(1,100)
+dataframe_results_MCEM_K50$simulations = seq(1,100)
+
+dataframe_MCEM = dataframe_results_MCEM[,c(1,2,7,8,13)]
+dataframe_results_MCEM_K50 = dataframe_results_MCEM_K50[,c(1,2,7,8,13)]
+
+rownames(dataframe_MCEM) = seq(1,100)
+rownames(dataframe_results_MCEM_K50) = seq(1,100)
+
+melted_df = melt(dataframe_MCEM,id.vars = "simulations")
+melted_df$variable = factor(melted_df$variable,levels=c("gh_beta0","mcem_beta0",
+                                                        "gh_beta1","mcem_beta1"))
+melted_df$variable_type = c(rep("beta0",100),rep("beta1",100),
+                            rep("beta0",100),rep("beta1",100))
+melted_df$method = c(rep("GH",200),rep("MCEM",200))
+
+melted_df_K50 = melt(dataframe_results_MCEM_K50,id.vars = "simulations")
+melted_df_K50$variable = factor(melted_df_K50$variable,levels=c("gh_beta0","mcem_beta0",
+                                                        "gh_beta1","mcem_beta1"))
+melted_df_K50$variable_type = c(rep("beta0",100),rep("beta1",100),
+                            rep("beta0",100),rep("beta1",100))
+melted_df_K50$method = c(rep("GH",200),rep("MCEM",200))
+
+p_K10 <- ggplot(melted_df) + geom_violin(aes(factor(variable_type), value, fill=factor(method))) +
+    ylab("Value") + xlab("") +
+    geom_segment(aes(x = 0.5, y = log(0.25), xend = 1.5, yend = log(0.25)),col="navy") +
+    geom_segment(aes(x = 1.5, y = log(2), xend = 2.5, yend =log(2)),col="navy")+
+    guides(col=FALSE) + ggtitle("K=10") + theme(legend.position="none")
+
+p_K10_zoom <- ggplot(melted_df) + geom_violin(aes(factor(variable_type), value, fill=factor(method))) +
+    ylab("Value") + xlab("") +
+    geom_segment(aes(x = 0.5, y = log(0.25), xend = 1.5, yend = log(0.25)),col="navy") +
+    geom_segment(aes(x = 1.5, y = log(2), xend = 2.5, yend =log(2)),col="navy")+
+    guides(col=FALSE) + ggtitle("K=10") + theme(legend.position="none") +
+    coord_cartesian(ylim=c(-2.5,1.5))
+
+p_K50 <- ggplot(melted_df_K50) + geom_violin(aes(factor(variable_type), value, fill=factor(method))) +
+    ylab("Value") + xlab("") +
+    geom_segment(aes(x = 0.5, y = log(0.25), xend = 1.5, yend = log(0.25)),col="navy") +
+    geom_segment(aes(x = 1.5, y = log(2), xend = 2.5, yend =log(2)),col="navy")+
+    guides(col=FALSE) + ggtitle("K=50") + coord_cartesian(ylim=c(-2.5,1.5))
+
+p <- grid.arrange(p_K10,p_K10_zoom,p_K50,ncol=3)
+p
+
+```
 
 ## Random intercepts
 
