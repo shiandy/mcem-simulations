@@ -5,10 +5,97 @@ date: "May 8, 2018"
 output: pdf_document
 ---
 
-# EM vs. Monte Carlo EM
-# traditional EM:
-```{r}
+```{r libraries}
 library(mixtools)
+library(ggplot2)
+library(reshape2)
+library(cowplot)
+library(matrixStats)
+```
+
+# EM vs. Monte Carlo EM
+
+```{r monte-carlo-em}
+# monte carlo EM for gaussian mixtures.
+# adapted from normalmixEM2comp from mixtools package
+normalmix_mcem <- function (x, lambda = NULL, mu = NULL, sigsqrd = NULL,
+                            eps = 1e-08, maxit = 1000,
+                            verb = FALSE, mc_samp = 100) {
+    x <- as.vector(x)
+    s <- NULL
+    if (!is.null(sigsqrd)) {
+        s <- sqrt(sigsqrd)
+    }
+    tmp <- normalmix.init(x = x, lambda = lambda, mu = mu, s = s,
+                          k = 2, arbmean = TRUE, arbvar = TRUE)
+    lambda <- tmp$lambda[1]
+    mu <- tmp$mu
+    sigma <- tmp$s
+    sigsqrd <- sigma^2
+    arbvar <- (length(sigsqrd) == 2)
+    mu1 <- mu[1]
+    mu2 <- mu[2]
+    sigsqrd1 <- sigsqrd[1]
+    sigsqrd2 <- sigsqrd[arbvar + 1]
+    mx <- mean(x)
+    n <- length(x)
+    const <- n * 0.918938533204673
+    dl <- 1 + eps
+    iter <- 0
+    ll <- rep(0, maxit + 1)
+    a1 <- (x - mu1)^2
+    b1 <- (lambda/sqrt(sigsqrd1)) * exp(-a1/2/sigsqrd1)
+    a2 <- (x - mu2)^2
+    b2 <- ((1 - lambda)/sqrt(sigsqrd2)) * exp(-a2/2/sigsqrd2)
+    l <- sum(log(b1 + b2))
+    while (dl > eps && iter < maxit) {
+        iter <- iter + 1
+        ll[iter] <- l
+        postprobs1 <- b1/(b1 + b2)
+        lambda1 <- mean(postprobs1)
+        postprob_sim <- matrix(rbinom(mc_samp * n, size = 1,
+                                      prob = rep(postprobs1, mc_samp)),
+                               nrow = mc_samp, ncol = n,
+                               byrow = TRUE)
+        postprobs <- colMeans(postprob_sim)
+        lambda <- mean(postprobs)
+        mu1 <- mean(postprobs * x)/lambda
+        mu2 <- (mx - lambda * mu1)/(1 - lambda)
+        if (arbvar) {
+            sigsqrd1 <- mean(postprobs * a1)/lambda
+            sigsqrd2 <- mean((1 - postprobs) * a2)/(1 - lambda)
+        }
+        else {
+            sigsqrd1 <- sigsqrd2 <- mean(postprobs * a1 + (1 -  postprobs) * a2)
+        }
+        a1 <- (x - mu1)^2
+        b1 <- (lambda/sqrt(sigsqrd1)) * exp(-a1/2/sigsqrd1)
+        a2 <- (x - mu2)^2
+        b2 <- ((1 - lambda)/sqrt(sigsqrd2)) * exp(-a2/2/sigsqrd2)
+        oldl <- l
+        l <- sum(log(b1 + b2))
+        dl <- l - oldl
+        if (verb) {
+            cat("iteration =", iter, " log-lik diff =", dl, " log-lik =",
+                l - const, "\n")
+        }
+    }
+    cat("number of iterations=", iter, "\n")
+    iter <- iter + 1
+    ll[iter] <- l
+    postprobs <- cbind(postprobs, 1 - postprobs)
+    colnames(postprobs) <- c(paste("comp", ".", 1:2, sep = ""))
+    out <- list(x = x, lambda = c(lambda, 1 - lambda),
+                mu = c(mu1,  mu2),
+                sigma = sqrt(c(sigsqrd1, sigsqrd2)[1:(1 + arbvar)]),
+                loglik = l - const, posterior = postprobs, all.loglik = ll[1:iter] -
+                    const, restarts = 0, ft = "normalmixEM")
+    class(out) <- "mixEM"
+    out
+}
+```
+
+```{r traditional-em, cache = TRUE}
 attach(faithful)
 wait1 <- normalmixEM(waiting, lambda = .5, mu = c(55, 80), sigma = c(5,5))
 plot(wait1, density = TRUE, cex.axis = 1.4, cex.lab = 1.5, cex.main = 1.5,
@@ -30,13 +117,10 @@ for (i in 1:numSims){
   matrix_results_normalEM[i,7] = length(normalEM$all.loglik)
 }
 
-library(ggplot2)
-library(reshape)
 dataframe_results_normalEM = as.data.frame(matrix_results_normalEM)
 colnames(dataframe_results_normalEM) = c("lambda1","lambda2","mu1","mu2",
                                          "sigma1","sigma2","numIters")
 dataframe_results_normalEM$simulations = seq(1,numSims)
-library(cowplot)
 melted_df = melt(dataframe_results_normalEM[,-7],id.vars = "simulations")
 melted_df$method = rep("normalEM",length(melted_df$simulations))
 p <- ggplot(melted_df) + geom_violin(aes(factor(variable), value,fill=factor(method))) +
@@ -46,7 +130,7 @@ p <- ggplot(melted_df) + geom_violin(aes(factor(variable), value,fill=factor(met
     geom_segment(aes(x = 2.5, y = 5, xend = 3.5, yend = 5,col="red"))+
     geom_segment(aes(x = 3.5, y = 10, xend = 4.5, yend = 10,col="red"))+
     geom_segment(aes(x = 4.5, y = 2, xend = 5.5, yend = 2,col="red"))+
-    geom_segment(aes(x = 5.5, y = 3, xend = 6.5, yend = 3,col="red")) + 
+    geom_segment(aes(x = 5.5, y = 3, xend = 6.5, yend = 3,col="red")) +
     guides(col=FALSE)
 p
 
@@ -55,7 +139,7 @@ p
 
 ## Simulated Data: Univariate
 
-## Simulated Data: Multivariate 
+## Simulated Data: Multivariate
 
 ## Real Data: Old Faithful
 
