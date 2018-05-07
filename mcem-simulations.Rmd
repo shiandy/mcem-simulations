@@ -10,6 +10,10 @@ output: pdf_document
 ```{r}
 library(mixtools)
 attach(faithful)
+library(ggplot2)
+library(reshape)
+library(cowplot)
+library(xtable)
 wait1 <- normalmixEM(waiting, lambda = .5, mu = c(55, 80), sigma = c(5,5))
 plot(wait1, density = TRUE, cex.axis = 1.4, cex.lab = 1.5, cex.main = 1.5,
      main2 = "Time between Old Faithful eruptions", xlab2 = "Minutes", whichplots = 2)
@@ -20,23 +24,27 @@ numSims = 100
 numObs = 1000
 x = NULL
 x = rnormmix(n=numObs*numSims,lambda = c(0.3,0.7),mu=c(5,10),sigma=c(2,3)) # generate the data
-matrix_results_normalEM = matrix(0,nrow = numSims,ncol = 7)
+matrix_results_normalEM = matrix(0,nrow = numSims,ncol = 8)
 for (i in 1:numSims){
     # 1- 1000, 1001-2000, 2001-3000,...
-  normalEM = normalmixEM(x[(numObs*(i-1)+1):(numObs*(i))],maxit = 10000)
+  time = system.time({
+      normalEM = normalmixEM(x[(numObs*(i-1)+1):(numObs*(i))],maxit = 10000)
+  })
   matrix_results_normalEM[i,1:2] = normalEM$lambda
   matrix_results_normalEM[i,3:4] = normalEM$mu
   matrix_results_normalEM[i,5:6] = normalEM$sigma
   matrix_results_normalEM[i,7] = length(normalEM$all.loglik)
+  matrix_results_normalEM[i,8] = time[3]
 }
-library(ggplot2)
-library(reshape)
+
 dataframe_results_normalEM = as.data.frame(matrix_results_normalEM)
 colnames(dataframe_results_normalEM) = c("lambda1","lambda2","mu1","mu2",
-                                         "sigma1","sigma2","numIters")
+                                         "sigma1","sigma2","numIters","timing")
+
+summary(dataframe_results_normalEM$timing)
+
 dataframe_results_normalEM$simulations = seq(1,numSims)
-library(cowplot)
-melted_df = melt(dataframe_results_normalEM[,-7],id.vars = "simulations")
+melted_df = melt(dataframe_results_normalEM[,-c(7,8)],id.vars = "simulations")
 melted_df$method = rep("normalEM",length(melted_df$simulations))
 p <- ggplot(melted_df) + geom_violin(aes(factor(variable), value,fill=factor(method))) +
     ylab("Value") + xlab("") +
@@ -47,7 +55,7 @@ p <- ggplot(melted_df) + geom_violin(aes(factor(variable), value,fill=factor(met
     geom_segment(aes(x = 4.5, y = 2, xend = 5.5, yend = 2,col="red"))+
     geom_segment(aes(x = 5.5, y = 3, xend = 6.5, yend = 3,col="red")) + 
     guides(col=FALSE)
-p
+ggsave(p,filename="Simulation_Setup1.pdf",width=11,height = 8,units = "in")
 
 ```
 
@@ -116,8 +124,11 @@ p_K50 <- ggplot(melted_df_K50) + geom_violin(aes(factor(variable_type), value, f
     geom_segment(aes(x = 1.5, y = log(2), xend = 2.5, yend =log(2)),col="navy")+
     guides(col=FALSE) + ggtitle("K=50") + coord_cartesian(ylim=c(-2.5,1.5))
 
-p <- grid.arrange(p_K10,p_K10_zoom,p_K50,ncol=3)
-p
+p <- grid.arrange(arrangeGrob(p_K10,p_K10_zoom,ncol=2),
+         arrangeGrob(p_K50, ncol=1, nrow=1), widths=c(3,3),ncol=2) 
+
+ggsave(p,filename="Simulation_Setup2.pdf",width=11,height = 8,units = "in")
+
 
 ```
 
