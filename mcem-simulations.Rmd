@@ -213,20 +213,24 @@ p_K10 <- ggplot(melted_df) + geom_violin(aes(factor(variable_type), value, fill=
     ylab("Value") + xlab("") +
     geom_segment(aes(x = 0.5, y = log(0.25), xend = 1.5, yend = log(0.25)),col="navy") +
     geom_segment(aes(x = 1.5, y = log(2), xend = 2.5, yend =log(2)),col="navy")+
-    guides(col=FALSE) + ggtitle("K=10") + theme(legend.position="none")
+    guides(col=FALSE) + ggtitle("K=10") + theme(legend.position="none") +
+    scale_fill_discrete(name = "Method")
+
 
 p_K10_zoom <- ggplot(melted_df) + geom_violin(aes(factor(variable_type), value, fill=factor(method))) +
     ylab("Value") + xlab("") +
     geom_segment(aes(x = 0.5, y = log(0.25), xend = 1.5, yend = log(0.25)),col="navy") +
     geom_segment(aes(x = 1.5, y = log(2), xend = 2.5, yend =log(2)),col="navy")+
     guides(col=FALSE) + ggtitle("K=10") + theme(legend.position="none") +
-    coord_cartesian(ylim=c(-2.5,1.5))
+    coord_cartesian(ylim=c(-2.5,1.5)) +
+    scale_fill_discrete(name = "Method")
 
 p_K50 <- ggplot(melted_df_K50) + geom_violin(aes(factor(variable_type), value, fill=factor(method))) +
     ylab("Value") + xlab("") +
     geom_segment(aes(x = 0.5, y = log(0.25), xend = 1.5, yend = log(0.25)),col="navy") +
     geom_segment(aes(x = 1.5, y = log(2), xend = 2.5, yend =log(2)),col="navy")+
-    guides(col=FALSE) + ggtitle("K=50") + coord_cartesian(ylim=c(-2.5,1.5))
+    guides(col=FALSE) + ggtitle("K=50") + coord_cartesian(ylim=c(-2.5,1.5)) +
+    scale_fill_discrete(name = "Method")
 
 p <- grid.arrange(arrangeGrob(p_K10,p_K10_zoom,ncol=2),
          arrangeGrob(p_K50, ncol=1, nrow=1), widths=c(3,3),ncol=2)
