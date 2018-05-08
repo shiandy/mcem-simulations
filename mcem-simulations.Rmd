@@ -125,13 +125,13 @@ for (i in 1:numSims){
   matrix_results_normalEM[i,5:6] = normalEM$sigma
   matrix_results_normalEM[i,7] = length(normalEM$all.loglik)
   matrix_results_normalEM[i,8] = time_em[3]
-  
+
   matrix_results_mcem[i, 1:2] = mcem$lambda
   matrix_results_mcem[i, 3:4] = mcem$mu
   matrix_results_mcem[i, 5:6] = mcem$sigma
   matrix_results_mcem[i, 7] = length(mcem$all.loglik)
   matrix_results_mcem[i, 8] = time_mcem[3]
-  
+
 }
 
 dataframe_results_normalEM = as.data.frame(matrix_results_normalEM)
@@ -155,7 +155,8 @@ p <- ggplot(melted_df) + geom_violin(aes(factor(variable), value,fill=factor(met
     geom_segment(aes(x = 3.5, y = 10, xend = 4.5, yend = 10,col="red"))+
     geom_segment(aes(x = 4.5, y = 2, xend = 5.5, yend = 2,col="red"))+
     geom_segment(aes(x = 5.5, y = 3, xend = 6.5, yend = 3,col="red")) +
-    guides(col=FALSE)
+    guides(col=FALSE) +
+    scale_fill_discrete(name = "Method")
 ggsave(p,filename="Simulation_Setup1.pdf",width=11,height = 8,units = "in")
 
 ```
@@ -221,7 +222,7 @@ p_K50 <- ggplot(melted_df_K50) + geom_violin(aes(factor(variable_type), value, f
     guides(col=FALSE) + ggtitle("K=50") + coord_cartesian(ylim=c(-2.5,1.5))
 
 p <- grid.arrange(arrangeGrob(p_K10,p_K10_zoom,ncol=2),
-         arrangeGrob(p_K50, ncol=1, nrow=1), widths=c(3,3),ncol=2) 
+         arrangeGrob(p_K50, ncol=1, nrow=1), widths=c(3,3),ncol=2)
 
 ggsave(p,filename="Simulation_Setup2.pdf",width=11,height = 8,units = "in")
 
